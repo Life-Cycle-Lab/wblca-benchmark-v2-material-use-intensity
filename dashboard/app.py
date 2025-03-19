@@ -113,6 +113,16 @@ numerical_options = [
     for col in merged_df.select_dtypes(include=['float64', 'int64', 'int32', 'float32']).columns
 ]
 
+def optimize_dataframe(df):
+    for col in df.select_dtypes(include=["float64"]).columns:
+        df[col] = pd.to_numeric(df[col], downcast="float")
+    for col in df.select_dtypes(include=["int64"]).columns:
+        df[col] = pd.to_numeric(df[col], downcast="integer")
+    return df
+
+# Apply to merged_df
+merged_df = optimize_dataframe(merged_df)
+
 # ✅ Encode Image
 def encode_image(image_path):
     if os.path.exists(image_path):
