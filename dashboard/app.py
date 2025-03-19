@@ -239,7 +239,7 @@ def render_tab_content(tab, stored_selections, stored_graph):
                         html.Ul([
                             html.Li("Life Cycle Assessment (LCA) scope is limited to cradle to gate impacts (A1 to A3)."),
                             html.Li("Building projects are limited to 'new construction' in North America."),
-                            html.Li("Mechanical, electrical, and plumbing [MEP], sitework, and furniture, fixtures, and equipment [FF&E] are not covered."),
+                            html.Li("Mechanical, electrical, and plumbing (MEP), sitework, and furniture, fixtures, and equipment (FF&E) are not covered."),
                             html.Li("Physical scope of buildings included are substructures (B), superstructures (S), enclosures (E), interior constructions (C), and interior finishes (F)."),
                         ]),
                         
