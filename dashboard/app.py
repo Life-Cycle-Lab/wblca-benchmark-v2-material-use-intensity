@@ -1,8 +1,7 @@
 import os
 import dash
-from dash import dcc, html, Input, Output, State
+from dash import dcc, html, Input, Output, State, dash_table
 import dash_bootstrap_components as dbc
-import dash_table
 import plotly.graph_objects as go
 import plotly.express as px
 import pandas as pd
