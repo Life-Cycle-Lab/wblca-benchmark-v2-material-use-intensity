@@ -97,6 +97,11 @@ numeric_cols = ["Inventory Mass (kg)", "Global Warming Potential (kgCO₂e)"]
 for col in numeric_cols:
     merged_df[col] = pd.to_numeric(merged_df[col], errors='coerce')
 
+# Restrict numerical options in the material-level analysis to specific values
+material_numerical_options = [
+    {"label": "Material Use Intensity", "value": "MUI (kg/m²)"},
+    {"label": "Embodied Carbon Intensity", "value": "ECI (kgCO₂e/m²)"}
+]
 
 # ✅ Encode Image
 def encode_image(image_path):
