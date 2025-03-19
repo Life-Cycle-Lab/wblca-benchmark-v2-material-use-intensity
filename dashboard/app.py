@@ -103,6 +103,16 @@ material_numerical_options = [
     {"label": "Embodied Carbon Intensity", "value": "ECI (kgCO₂e/m²)"}
 ]
 
+categorical_options = [
+    {'label': col, 'value': col} 
+    for col in merged_df.select_dtypes(include=['object', 'category']).columns
+]
+
+numerical_options = [
+    {'label': col, 'value': col} 
+    for col in merged_df.select_dtypes(include=['float64', 'int64', 'int32', 'float32']).columns
+]
+
 # ✅ Encode Image
 def encode_image(image_path):
     if os.path.exists(image_path):
