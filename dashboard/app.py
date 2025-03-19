@@ -73,7 +73,7 @@ DATA_DIR = os.path.join(BASE_DIR, "data")
 ASSETS_DIR = os.path.join(BASE_DIR, "assets")
 
 # ✅ Load Data Files Safely
-merged_df_path = os.path.join(DATA_DIR, "merged.parquet")
+merged_df_path = os.path.join(DATA_DIR, "merged_df.parquet")
 wblca_meta_data_path = os.path.join(DATA_DIR, "buildings_metadata_02-21-2025_a1_to_a3_new_construction.xlsx")
 
 # ✅ Ensure Files Exist Before Loading
