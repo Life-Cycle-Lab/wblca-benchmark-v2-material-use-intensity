@@ -78,7 +78,8 @@ wblca_meta_data_path = os.path.join(DATA_DIR, "buildings_metadata_02-21-2025_a1_
 
 # ✅ Ensure Files Exist Before Loading
 if os.path.exists(merged_df_path):
-    merged_df = pd.read_parquet(merged_df_path, na_values=["NA", "NULL"])
+    merged_df = pd.read_parquet(merged_df_path)
+    merged_df.replace(["NA", "NULL"], np.nan, inplace=True)
 else:
     raise FileNotFoundError(f"Missing file: {merged_df_path}")
 
