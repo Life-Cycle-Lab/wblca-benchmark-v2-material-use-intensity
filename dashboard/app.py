@@ -10,30 +10,78 @@ import numpy as np
 import base64
 import matplotlib.cm as cm
 
+# ✅ Initialize Dash App with Pulse Bootstrap Theme
 app = dash.Dash(
     __name__,
     suppress_callback_exceptions=True,
-    external_stylesheets=["https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700&display=swap"],
-    requests_pathname_prefix="/"  # Set this correctly when using an iframe
-
+    external_stylesheets=[dbc.themes.PULSE]  # Apply Pulse theme
 )
-server = app.server  # Needed for Gunicorn
+server = app.server
+
+# # ✅ Define Absolute Paths for Data Files
+# BASE_DIR = os.path.dirname(os.path.abspath(__file__))  # Get current script directory
+# DATA_DIR = os.path.join(BASE_DIR, "data")
+# ASSETS_DIR = os.path.join(BASE_DIR, "assets")
+
+# # ✅ Load Data Files Safely
+# wblca_results_path = os.path.join(DATA_DIR, "full_lca_results_02-21-2025_a1_to_a3.csv")
+# wblca_meta_data_path = os.path.join(DATA_DIR, "buildings_metadata_02-21-2025_a1_to_a3_new_construction.xlsx")
+
+# # ✅ Ensure Files Exist Before Loading
+# if os.path.exists(wblca_results_path):
+#     wblca_results_full = pd.read_csv(wblca_results_path, na_values=["NA", "NULL"])
+# else:
+#     raise FileNotFoundError(f"Missing file: {wblca_results_path}")
+
+# if os.path.exists(wblca_meta_data_path):
+#     wblca_meta_data = pd.read_excel(wblca_meta_data_path, na_values=["NA", "NULL"])
+# else:
+#     raise FileNotFoundError(f"Missing file: {wblca_meta_data_path}")
+
+# # Ensure 'Project Index' is a string for merging
+# wblca_results_full['Project Index'] = wblca_results_full['Project Index'].astype(str)
+# wblca_meta_data['Project Index'] = wblca_meta_data['Project Index'].astype(str)
+
+# # **Force conversion of specific columns to numeric**
+# numeric_cols = ["Inventory Mass (kg)", "Global Warming Potential (kgCO₂e)"]
+# for col in numeric_cols:
+#     wblca_results_full[col] = pd.to_numeric(wblca_results_full[col], errors='coerce')
+
+# # Perform a left join on 'Project Index'
+# merged_df = pd.merge(wblca_results_full, wblca_meta_data, on="Project Index", how="left")
+
+# # Compute derived columns safely
+# merged_df['MUI (kg/m²)'] = np.where(
+#     merged_df['Constructed Floor Area (m²)'] != 0, merged_df['Inventory Mass (kg)'] / merged_df['Constructed Floor Area (m²)'], np.nan)
+
+# merged_df['ECI (kgCO₂e/m²)'] = np.where(
+#     merged_df['Constructed Floor Area (m²)'] != 0, merged_df['Global Warming Potential (kgCO₂e)'] / merged_df['Constructed Floor Area (m²)'], np.nan)
+
+
+
+# # Rename some feature names:
+# wblca_meta_data.rename(columns={
+#     'total_mass_a1_to_a3': 'Total Mass (kg)',
+#     'total_gwp_a1_to_a3': 'Total GWP (kgCO₂e)',
+#     'total_mui_a1_to_a3': 'Total MUI (kg/m²)',
+#     'total_eci_a1_to_a3': 'Total ECI (kgCO₂e/m²)',
+# }, inplace=True)
+
 
 # ✅ Define Absolute Paths for Data Files
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))  # Get current script directory
 DATA_DIR = os.path.join(BASE_DIR, "data")
 ASSETS_DIR = os.path.join(BASE_DIR, "assets")
 
-
 # ✅ Load Data Files Safely
-wblca_results_path = os.path.join(DATA_DIR, "full_lca_results_02-21-2025_a1_to_a3.csv")
+merged_df_path = os.path.join(DATA_DIR, "merged.parquet")
 wblca_meta_data_path = os.path.join(DATA_DIR, "buildings_metadata_02-21-2025_a1_to_a3_new_construction.xlsx")
 
 # ✅ Ensure Files Exist Before Loading
-if os.path.exists(wblca_results_path):
-    wblca_results_full = pd.read_csv(wblca_results_path, na_values=["NA", "NULL"])
+if os.path.exists(merged_df_path):
+    merged_df = pd.read_parquet(merged_df_path, na_values=["NA", "NULL"])
 else:
-    raise FileNotFoundError(f"Missing file: {wblca_results_path}")
+    raise FileNotFoundError(f"Missing file: {merged_df_path}")
 
 if os.path.exists(wblca_meta_data_path):
     wblca_meta_data = pd.read_excel(wblca_meta_data_path, na_values=["NA", "NULL"])
@@ -41,41 +89,14 @@ else:
     raise FileNotFoundError(f"Missing file: {wblca_meta_data_path}")
 
 # Ensure 'Project Index' is a string for merging
-wblca_results_full['Project Index'] = wblca_results_full['Project Index'].astype(str)
+merged_df['Project Index'] = merged_df['Project Index'].astype(str)
 wblca_meta_data['Project Index'] = wblca_meta_data['Project Index'].astype(str)
 
 # **Force conversion of specific columns to numeric**
-numeric_cols = ["inv_mass", "gwp", "service_life"]
+numeric_cols = ["Inventory Mass (kg)", "Global Warming Potential (kgCO₂e)"]
 for col in numeric_cols:
-    wblca_results_full[col] = pd.to_numeric(wblca_results_full[col], errors='coerce')
+    merged_df[col] = pd.to_numeric(merged_df[col], errors='coerce')
 
-# Perform a left join on 'Project Index'
-merged_df = pd.merge(wblca_results_full, wblca_meta_data, on="Project Index", how="left")
-
-# Compute derived columns safely
-merged_df['MUI (kg/m²)'] = np.where(
-    merged_df['bldg_cfa'] != 0, merged_df['inv_mass'] / merged_df['bldg_cfa'], np.nan)
-
-merged_df['ECI (kgCO₂e/m²)'] = np.where(
-    merged_df['bldg_cfa'] != 0, merged_df['gwp'] / merged_df['bldg_cfa'], np.nan)
-
-# Assuming 'merged_df' and 'wblca_meta_data' are loaded as DataFrame
-categorical_options = [{'label': col, 'value': col} for col in merged_df.columns if merged_df[col].dtype == 'object']
-numerical_options = [{'label': col, 'value': col} for col in merged_df.columns if merged_df[col].dtype in ['float64', 'int']]
-
-# Restrict numerical options to only "mui (kg/m²)" and "eci (kgCO₂e/m²)"
-material_numerical_options = [
-    {"label": "Material Use Intensity", "value": "MUI (kg/m²)"},
-    {"label": "Embodied Carbon Intensity", "value": "ECI (kgCO₂e/m²)"}
-]
-
-# Rename some feature names:
-wblca_meta_data.rename(columns={
-    'total_mass_a1_to_a3': 'Total Mass (kg)',
-    'total_gwp_a1_to_a3': 'Total GWP (kgCO₂e)',
-    'total_mui_a1_to_a3': 'Total MUI (kg/m²)',
-    'total_eci_a1_to_a3': 'Total ECI (kgCO₂e/m²)',
-}, inplace=True)
 
 # ✅ Encode Image
 def encode_image(image_path):
@@ -95,513 +116,604 @@ else:
     df_glossary = pd.DataFrame()  # Avoid errors if missing
 
 
-# Layout with Page Title and Tabs
-app.layout = html.Div([
-    # ✅ Add header image
-    html.Img(
-        src=image_src,
-        style={'width': '100%', 'display': 'block', 'margin-left': 'auto', 'margin-right': 'auto', 'margin-bottom': '10px'}
-    ),
+# ✅ Define Layout with Bootstrap Components
+app.layout = dbc.Container([
+    dbc.Row([
+        dbc.Col(html.Img(
+            src=image_src,
+            className="img-fluid mb-3"
+        ), width=12)
+    ]),
 
-    # ✅ Add a Page Title
-    html.H1(
-        "Embodied Carbon and Material Use Intensity Visualizer",
-        style={'textAlign': 'center', 'margin-top': '20px', 'margin-bottom': '10px', 'font-weight': 'bold', 'fontSize': '24px'}
-    ),
+    dbc.Row([
+        dbc.Col(html.H1(
+            "Embodied Carbon and Material Use Intensity Visualizer",
+            className="text-center text-primary mt-3 mb-3",
+            style={"fontSize": "30px"}  # ✅ Reduce font size
+        ), width=12)
+    ]),
 
-    # ✅ Add dcc.Store to keep selections and graphs stored across tabs
+    # ✅ Add dcc.Store to store selections across tabs
     dcc.Store(id="material-level-selections"),
     dcc.Store(id="building-level-selections"),
     dcc.Store(id="material-graph-data"),
     dcc.Store(id="building-graph-data"),
 
-    # ✅ Create Tab Layout
-    dcc.Tabs(
+    # ✅ Tab Navigation using dbc.Nav
+
+    dbc.Tabs(
+        [
+            dbc.Tab(label="Introduction", tab_id="instructions",
+                    tab_style={"width": "25%", "textAlign": "center"},
+                    active_tab_style={"fontWeight": "bold", "textAlign": "center"}),
+
+            dbc.Tab(label="Data Glossary", tab_id="glossary",
+                    tab_style={"width": "25%", "textAlign": "center"},
+                    active_tab_style={"fontWeight": "bold", "textAlign": "center"}),
+
+            dbc.Tab(label="Material Level Analysis", tab_id="material_analysis",
+                    tab_style={"width": "25%", "textAlign": "center"},
+                    active_tab_style={"fontWeight": "bold", "textAlign": "center"}),
+
+            dbc.Tab(label="Building Level Analysis", tab_id="building_analysis",
+                    tab_style={"width": "25%", "textAlign": "center"},
+                    active_tab_style={"fontWeight": "bold", "textAlign": "center"}),
+        ],
         id="tabs",
-        value="instructions",
-        children=[
-            dcc.Tab(
-                label="Introduction",
-                value="instructions",
-                style={'fontWeight': 'bold', 'fontSize': '14px', 'height': '24px',
-                    'display': 'flex', 'alignItems': 'center', 'justifyContent': 'center'},
-                selected_style={'fontSize': '14px', 'height': '24px',
-                                'display': 'flex', 'alignItems': 'center', 'justifyContent': 'center',
-                                'backgroundColor': '#f4edff', 'borderTop': '1px solid black'}
-            ),
-            dcc.Tab(
-                label="Data Glossary",
-                value="glossary",
-                style={'fontWeight': 'bold', 'fontSize': '14px', 'height': '24px',
-                    'display': 'flex', 'alignItems': 'center', 'justifyContent': 'center'},
-                selected_style={'fontSize': '14px', 'height': '24px',
-                                'display': 'flex', 'alignItems': 'center', 'justifyContent': 'center',
-                                'backgroundColor': '#f4edff', 'borderTop': '1px solid black'}
-            ),
-            dcc.Tab(
-                label="Material Level Analysis",
-                value="material_analysis",
-                style={'fontWeight': 'bold', 'fontSize': '14px', 'height': '24px',
-                    'display': 'flex', 'alignItems': 'center', 'justifyContent': 'center'},
-                selected_style={'fontSize': '14px', 'height': '24px',
-                                'display': 'flex', 'alignItems': 'center', 'justifyContent': 'center',
-                                'backgroundColor': '#f4edff', 'borderTop': '1px solid black'}
-            ),
-            dcc.Tab(
-                label="Building Level Analysis",
-                value="building_analysis",
-                style={'fontWeight': 'bold', 'fontSize': '14px', 'height': '24px',
-                    'display': 'flex', 'alignItems': 'center', 'justifyContent': 'center'},
-                selected_style={'fontSize': '14px', 'height': '24px',
-                                'display': 'flex', 'alignItems': 'center', 'justifyContent': 'center',
-                                'backgroundColor': '#f4edff', 'borderTop': '1px solid black'}
-            ),
-        ]),
+        active_tab="instructions",
+        className="mb-3",
+        style={"width": "100%"}
+    ),
 
-    # ✅ Content of Tabs
-    html.Div(id="tab-content")
-], style={'font-family': 'Open Sans, sans-serif'})
+    # ✅ Tab Content
+    dbc.Container(id="tab-content", className="p-4 w-100", fluid=True)
+], fluid=True)
 
-# Callback to switch tab content
+# ✅ Callback to switch tab content
 @app.callback(
     Output("tab-content", "children"),
-    Input("tabs", "value"),
+    Input("tabs", "active_tab"),
     State("material-level-selections", "data"),
     State("material-graph-data", "data"),
 )
 def render_tab_content(tab, stored_selections, stored_graph):
     if tab == "instructions":
-        return html.Div([
-            html.P("This advanced dashboard is developed as part of the Carbon Leadership Forum's (CLF) WBLCA Benchmarking Study V2, designed primarily for the visualization of Material Use Intensity and Embodied Carbon Intensity. It serves as an interactive platform to explore the environmental impacts of building materials and construction practices. Detailed information on the data collection methodologies and metadata can be found in the associated journal publication, which is currently under review (placeholder for DOI).",
-                   style={'textAlign': 'justify'}),
-            html.H4("Purpose of the Tool:"),
-            html.Ul([
-                html.Li("Material Use Intensity and Embodied Carbon Visualization: Focuses on detailed presentation of material and carbon footprint data."),
-                html.Li("Research and Data Background: Derived from the CLF’s comprehensive WBLCA Benchmarking Study V2, facilitating insights into sustainable building practices."),
-            ]),
-            html.H4("Scope of Analysis:"),
-            html.Ul([
-                html.Li("Life Cycle Assessment (LCA) scope is limited to cradle to gate impacts (A1 to A3)."),
-                html.Li("Building scopes are limited to 'new construction' projects in North America."),
-            ]),
-            html.H4("Navigation Overview:"),
-            html.Ul([
-                html.Li("'Material Level Analysis': Allows detailed examination of material-specific data through filters, aggregation methods, and custom visualizations."),
-                html.Li("'Building Level Analysis': Focuses on building-level data, offering insights through comparisons and analyses of different building types and construction metrics."),
-            ]),
-            html.H4("Using the Dashboard:"),
-            html.Ul([
-                html.Li("Interactive Visualizations: Graphs and charts update in real time based on user inputs."),
-                html.Li("Customizable Outputs: Tailor visual outputs through detailed control panels to focus your analysis."),
-                html.Li("Exportable Data: Download graphs and data summaries for offline use and further analysis."),
-            ]),
-            html.Br(),
-            html.P("For questions, contact ashtiani@uw.edu. Enjoy exploring!",
-                style={'textAlign': 'center', 'marginTop': '20px'}),
-            html.P([
-                "(",
-                html.A("CC BY 4.0", href="http://creativecommons.org/licenses/by/4.0/"),
-                ") Life Cycle Lab 2025"
-            ], style={'textAlign': 'center', 'marginTop': '20px', 'fontSize': '16px', 'color': 'gray'}),
-        ], style={'padding': '20px'})
+        return dbc.Container([
+            dbc.Row([
+                dbc.Col(dbc.Card([
+                    dbc.CardBody([
+                        html.P([
+                            "This dashboard is developed as part of the ",
+                            html.A("Carbon Leadership Forum (CLF)", href="https://www.carbonleadershipforum.org", target="_blank", className="text-primary"),
+                            "'s WBLCA Benchmarking Study V2 in collaboration with the ",
+                            html.A("Life Cycle Lab", href="https://www.lifecyclelab.org", target="_blank", className="text-primary"),
+                            " at the University of Washington, designed primarily for the visualization of Material Use Intensity and Embodied Carbon Intensity. It serves as an interactive platform to explore the environmental impacts of building materials and construction practices. Detailed information on the data sources, methodologies, metadata can be found under references below."
+                        ], className="text-justify"),
+                        
+                        html.H4("Purpose of the Tool:", className="mt-4", style={"fontSize": "18px"}),
+                        html.Ul([
+                            html.Li("Material Use Intensity (MUI) and Embodied Carbon Intensity (ECI) visualizations for a variety of data grouping options from building characteristics to material categories."),
+                            html.Li("Enable dynamic visualization of data (as opposed to static graphics often published in journal articles), according to the methodological framework developed in the referenced journal article."),
+                        ]),
+                        
+                        html.H4("Navigation Overview:", className="mt-4", style={"fontSize": "18px"}),
+                        html.Ul([
+                            html.Li("'Data Glossary': Contains a list and description of possible selections for numerical and categorical features contained in the background data in use of this dashboard."),
+                            html.Li("'Material Level Analysis': Allows detailed examination of material-specific data through filters, aggregation methods, and custom visualizations."),
+                            html.Li("'Building Level Analysis': Focuses on building-level data, offering insights through comparisons and analyses of different building characteristics."),
+                        ]),
+                        
+                        html.H4("Using the Dashboard:", className="mt-4", style={"fontSize": "18px"}),
+                        html.Ul([
+                            html.Li("Select Features: As a minimum, select a metric (i.e., numerical feature) and a category (i.e., categorical feature) to start visualizations."),
+                            html.Li("Customize Outputs: Tailor visual outputs through the selection of a stacking feature (i.e., secondary categorical feature), data aggregation methods, graph dimensions, etc."),
+                            html.Li("Export Graphs: Download graphs for offline use and further analysis."),
+                        ]),
+                        
+                        html.H4("Scope of Analysis:", className="mt-4", style={"fontSize": "18px"}),
+                        html.Ul([
+                            html.Li("Life Cycle Assessment (LCA) scope is limited to cradle to gate impacts (A1 to A3)."),
+                            html.Li("Building projects are limited to 'new construction' in North America."),
+                            html.Li("Mechanical, electrical, and plumbing [MEP], sitework, and furniture, fixtures, and equipment [FF&E] are not covered."),
+                            html.Li("Physical scope of buildings included are substructures (B), superstructures (S), enclosures (E), interior constructions (C), and interior finishes (F)."),
+                        ]),
+                        
+                        html.H4("Resources:", className="mt-4", style={"fontSize": "18px"}),
+                        html.Ul([
+                            html.Li("Ashtiani et al. Material Use and Embodied Carbon Intensity of New Construction Buildings in North America. (Pre-print)"),
+                            html.Li(html.A("CLF's WBLCA Benchmark Study v2", 
+                                        href="https://carbonleadershipforum.org/clf-wblca-v2/", 
+                                        target="_blank", 
+                                        className="text-primary")),
 
+                            html.Li(html.A("Benke et al. A Harmonized Dataset of High-resolution Whole Building Life Cycle Assessment Results in North America. (Pre-print)", 
+                                        href="https://www.researchsquare.com/article/rs-6108016/v1", 
+                                        target="_blank", 
+                                        className="text-primary")),
+
+                            html.Li(html.A("Benke et al. A Harmonized Dataset of High-resolution Whole Building Life Cycle Assessment Results in North America: Data only - First Public Release.", 
+                                        href="https://figshare.com/articles/dataset/A_Harmonized_Dataset_of_High-Resolution_Whole_Building_Life_Cycle_Assessment_Results_in_North_America_i_Data_only_-_i_i_First_Public_Release_i_/28462145/1", 
+                                        target="_blank", 
+                                        className="text-primary")),
+                        ]),
+                        html.Br(),
+
+                        
+                        html.P("For questions, contact ashtiani@uw.edu. Enjoy exploring!", className="text-center mt-3"),
+                        html.P([
+                            "(",
+                            html.A("CC BY 4.0", href="http://creativecommons.org/licenses/by/4.0/", className="text-primary"),
+                            ") Life Cycle Lab 2025"
+                        ], className="text-center text-muted mt-3"),
+                    ])
+                ], className="shadow-sm border-0 p-4"))
+            ])
+        ], fluid=True)
 
     elif tab == "glossary":
         # Define specific widths for each column based on typical content length
         column_styles = [
-            {'if': {'column_id': df_glossary.columns[0]}, 'minWidth': '20px', 'width': '25px', 'maxWidth': '50px'},  # Adjusted for minimal content
-            {'if': {'column_id': df_glossary.columns[1]}, 'minWidth': '50px', 'width': '125px', 'maxWidth': '125px'},  # Wider for more content
-            {'if': {'column_id': df_glossary.columns[2]}, 'minWidth': '50px', 'width': '125px', 'maxWidth': '125px'},  # Description, usually lengthy
-            {'if': {'column_id': df_glossary.columns[3]}, 'minWidth': '300px', 'width': '350px', 'maxWidth': '400px'},  # Description, usually lengthy
-            {'if': {'column_id': df_glossary.columns[4]}, 'minWidth': '20px', 'width': '25px', 'maxWidth': '50px'}   # Units, typically short
+            {'if': {'column_id': df_glossary.columns[0]}, 'minWidth': '50px', 'width': '60px', 'maxWidth': '80px'},  # Adjusted for minimal content
+            {'if': {'column_id': df_glossary.columns[1]}, 'minWidth': '50px', 'width': '150px', 'maxWidth': '100px'},  # Slightly wider
+            {'if': {'column_id': df_glossary.columns[2]}, 'minWidth': '50px', 'width': '200px', 'maxWidth': '100px'},  # Medium-sized text
+            {'if': {'column_id': df_glossary.columns[3]}, 'minWidth': '50px', 'width': '350px', 'maxWidth': '400px'},  # Description column
+            {'if': {'column_id': df_glossary.columns[4]}, 'minWidth': '50px', 'width': '75px', 'maxWidth': '100px'}  # Units column
         ]
 
-        return html.Div([
-            dash_table.DataTable(
-                id='table',
-                columns=[{"name": col, "id": col} for col in df_glossary.columns],
-                data=df_glossary.to_dict('records'),
-                style_cell={
-                    'textAlign': 'left',
-                    'padding': '5px',
-                    'overflow': 'hidden',
-                    'textOverflow': 'ellipsis',
-                    'whiteSpace': 'normal',
-                    'height': 'auto'
-                },
-                style_table={
-                    'overflowX': 'auto',
-                    'width': '100%',
-                    'minWidth': '100%',
-                },
-                style_header={
-                    'backgroundColor': 'light-grey',
-                    'fontWeight': 'bold'
-                },
-                style_data_conditional=[
-                    {'if': {'row_index': 'odd'}, 'backgroundColor': 'rgb(248, 248, 248)'}
-                ],
-                style_cell_conditional=column_styles,
-                fill_width=True
-            )
-        ], style={'padding': '20px 20px 20px 20px 20px', 'margin-top': '20px', 'box-shadow': '0 2px 2px 0 rgba(0,0,0,0.05)'})
+        return dbc.Container([
+            dbc.Row([
+                dbc.Col(dbc.Card([
+                    dbc.CardHeader("Data Glossary", className="bg-primary text-white", style={"display": "flex", "justifyContent": "center", "alignItems": "center"}),
+                    dbc.CardBody([
+                        dash_table.DataTable(
+                            id='table',
+                            columns=[{"name": col, "id": col} for col in df_glossary.columns],
+                            data=df_glossary.to_dict('records'),
+
+                            # ✅ Keep text aligned properly with proper font size
+                            style_cell={
+                                'textAlign': 'left',
+                                'padding': '5px',
+                                'overflow': 'hidden',
+                                'textOverflow': 'ellipsis',
+                                'whiteSpace': 'normal',
+                                'height': 'auto',
+                                'fontSize': '12px'  # ✅ Ensures smaller font
+                            },
+
+                            # ✅ Keep the table scrollable if needed
+                            style_table={
+                                'overflowX': 'auto',
+                                'width': '100%',
+                                'minWidth': '100%',
+                            },
+
+                            # ✅ Keep headers styled properly
+                            style_header={
+                                'backgroundColor': '#f8f9fa',
+                                'fontWeight': 'bold',
+                                'fontSize': '14px'
+                            },
+
+                            # ✅ Ensure proper row styling
+                            style_data_conditional=[
+                                {'if': {'row_index': 'odd'}, 'backgroundColor': 'rgb(248, 248, 248)'}
+                            ],
+
+                            # ✅ Maintain column-specific widths
+                            style_cell_conditional=column_styles,
+                            
+                            fill_width=True
+                        )
+                    ])
+                ], className="shadow-sm border-0 p-4"))
+            ])
+        ], fluid=True)
 
     elif tab == "material_analysis":
-        return html.Div([
-            # Parent container for layout
-            html.Div([
-                # Left side (Dropdowns & Inputs) - 1/4 width
-                html.Div([
+        return dbc.Container([
+            dbc.Row([
+                # Left Section: Controls (Dropdowns & Inputs)
+                dbc.Col([
+                    dbc.Card([
+                        dbc.CardHeader("Material Analysis Controls", className="bg-primary text-white"),
+                        dbc.CardBody([
+                            # ✅ Select Metrics
+                            dbc.Row([
+                                dbc.Col([
+                                    dbc.Label("Select Metrics (Required):", className="fw-bold"),
+                                    dcc.Dropdown(
+                                        id='numerical_feature_dropdown',
+                                        options=material_numerical_options,
+                                        value=(stored_selections or {}).get("material_numerical_options", None),
+                                        placeholder="Select a feature...",
+                                        persistence=True,
+                                        persistence_type="session",
+                                    )
+                                ], width=12)
+                            ], className="mb-2"),
 
-                    # Dropdowns for categorical, numerical, and stacking variables
+                            # ✅ Select Categories
+                            dbc.Row([
+                                dbc.Col([
+                                    dbc.Label("Select Categories (Required):", className="fw-bold"),
+                                    dcc.Dropdown(
+                                        id='primary_categorical_feature_dropdown',
+                                        options=categorical_options,
+                                        value=(stored_selections or {}).get("primary_categorical_feature", None),
+                                        placeholder="Select a feature...",
+                                        persistence=True,
+                                        persistence_type="session",
+                                    )
+                                ], width=12)
+                            ], className="mb-2"),
 
-                    html.Div([
-                        html.Label("Select Metrics (Required):"),
-                        dcc.Dropdown(
-                            id='numerical_feature_dropdown',
-                            # options=numerical_options,
-                            options=material_numerical_options,
-                            value=(stored_selections or {}).get("material_numerical_options", None),
-                            placeholder="Select a feature...",
-                            persistence=True,
-                            persistence_type="session",
-                            style={'width': '100%'}
-                        ),
-                    ], style={'marginBottom': '10px'}),
+                            html.Hr(),
 
-                    html.Div([
-                        html.Label("Select Categories (Required):"),
-                        dcc.Dropdown(
-                            id='primary_categorical_feature_dropdown',
-                            options=categorical_options,
-                            value=(stored_selections or {}).get("primary_categorical_feature", None),
-                            placeholder="Select a feature...",
-                            persistence=True,
-                            persistence_type="session",
-                            style={'width': '100%'}
-                        ),
-                    ], style={'marginBottom': '10px'}),
+                            # ✅ Add Stacks (Optional)
+                            dbc.Row([
+                                dbc.Col([
+                                    dbc.Label("Add Stacks (Optional):", className="fw-bold"),
+                                    dcc.Dropdown(
+                                        id='secondary_categorical_feature_dropdown',
+                                        options=[{'label': 'None', 'value': ''}] + categorical_options,
+                                        value=(stored_selections or {}).get("secondary_categorical_feature", None),
+                                        placeholder="Select a feature...",
+                                        persistence=True,
+                                        persistence_type="session",
+                                    )
+                                ], width=12)
+                            ], className="mb-2"),
 
-                    html.Hr(),
+                            # ✅ Filtering Area
+                            dbc.Row([
+                                dbc.Col([
+                                    dbc.Label("Add Data Filters (Optional):", className="fw-bold"),
+                                    dcc.Dropdown(
+                                        id="filter-categorical-features-material",
+                                        options=[{"label": col, "value": col} for col in merged_df.select_dtypes(include=["object", "category"]).columns],
+                                        placeholder="Select a feature...",
+                                        multi=True,
+                                        persistence=True,
+                                        persistence_type="session",
+                                    ),
+                                    html.Div(id="filter-values-container-material", className="mt-2"),
+                                ], width=12)
+                            ], className="mb-2"),
 
-                    html.Div([
-                        html.Label("Add Stacks (Optional):"),
-                        dcc.Dropdown(
-                            id='secondary_categorical_feature_dropdown',
-                            options=[{'label': 'None', 'value': ''}] + categorical_options,
-                            value=(stored_selections or {}).get("secondary_categorical_feature", None),
-                            placeholder="Select a feature...",
-                            persistence=True,
-                            persistence_type="session",
-                            style={'width': '100%'}
-                        ),
-                    ], style={'marginBottom': '10px'}),
+                            html.Hr(),
 
-                    # Filtering Area
-                    html.Div([
-                        html.Div("Add Data Filters (Optional):", style={"marginBottom": "5px"}),
-                        dcc.Dropdown(
-                            id="filter-categorical-features-material",
-                            options=[
-                                {"label": col, "value": col}
-                                for col in merged_df.select_dtypes(include=["object", "category"]).columns
-                            ],
-                            placeholder="Select a feature...",
-                            multi=True,
-                            persistence=True,
-                            persistence_type="session",
-                        ),
-                    ], style={'marginBottom': '10px'}),
+                            # ✅ Aggregation Method
+                            dbc.Row([
+                                dbc.Col([
+                                    dbc.Label("Aggregation Method:"),
+                                    dbc.RadioItems(
+                                        id="aggregation-method-material",
+                                        options=[
+                                            {"label": " Mean", "value": "mean"},
+                                            {"label": " Median", "value": "median"},
+                                        ],
+                                        value="mean",
+                                        inline=False,
+                                        persistence=True,
+                                        persistence_type="session",
+                                    )
+                                ], width=12)
+                            ], className="mb-2"),
 
-                    html.Div(id="filter-values-container-material", children=[]),
+                            # ✅ Replace Missing Data with Zero
+                            dbc.Row([
+                                dbc.Col([
+                                    dbc.Checkbox(
+                                        id="impute-zeros-checkbox",
+                                        label="Replace Missing Data with Zero",
+                                        persistence=True,
+                                        persistence_type="session",
+                                        value=False,
+                                    )
+                                ], width=12)
+                            ], className="mb-2"),
 
-                    html.Hr(),
+                            html.Hr(),
 
-                    # Aggregation Method
-                    html.Div([
-                        html.Label("Aggregation Method:"),
-                        dcc.RadioItems(
-                            id="aggregation-method-material",
-                            options=[
-                                {"label": " Mean", "value": "mean"},
-                                {"label": " Median", "value": "median"},
-                            ],
-                            value="mean",
-                            inline=False,
-                            persistence=True,
-                            persistence_type="session",
-                        ),
-                    ], style={'marginBottom': '10px'}),
+                            # ✅ Logarithmic Y-Axis
+                            dbc.Row([
+                                dbc.Col([
+                                    dbc.Checkbox(
+                                        id="log_y_axis",
+                                        label="Logarithmic Y-Axis",
+                                        persistence=True,
+                                        persistence_type="session",
+                                        value=False,
+                                    )
+                                ], width=12)
+                            ], className="mb-2"),
 
-                    html.Div([
-                        dbc.Checkbox(
-                            id="impute-zeros-checkbox",
-                            label="Replace Missing Data with Zero",
-                            persistence=True,
-                            persistence_type="session",
-                            value=False,
-                        ),
-                    ], style={'margin-bottom': '10px'}),
+                            # ✅ 100% Stacked Bar Chart
+                            dbc.Row([
+                                dbc.Col([
+                                    dbc.Checkbox(
+                                        id="stacked_100_percent",
+                                        label="100% Stacked Bar Chart",
+                                        persistence=True,
+                                        persistence_type="session",
+                                        value=False,
+                                    )
+                                ], width=12)
+                            ], className="mb-2"),
 
-                    html.Hr(),
+                            # ✅ Graph Dimensions
+                            dbc.Row([
+                                dbc.Col([
+                                    dbc.Label("Graph Dimensions:"),
+                                ], width=12)
+                            ], className="mb-2"),
 
-                    html.Div([
-                        dbc.Checkbox(
-                            id="log_y_axis",
-                            label="Logarithmic Y-Axis",
-                            persistence=True,
-                            persistence_type="session",
-                            value=False,
-                        ),
-                    ], style={'margin-bottom': '10px'}),
+                            dbc.Row([
+                                dbc.Col([
+                                    dbc.Label("Width", className="mb-1"),
+                                    dbc.Input(
+                                        id="graph_width",
+                                        type="number",
+                                        placeholder="e.g., 800",
+                                        step=50,
+                                        persistence=True,
+                                        persistence_type="session",
+                                    )
+                                ], width=6),
 
-                    html.Div([
-                        dbc.Checkbox(  # ✅ New checkbox for 100% stacking
-                            id="stacked_100_percent",
-                            label="100% Stacked Bar Chart",
-                            persistence=True,
-                            persistence_type="session",
-                            value=False,
-                        ),
-                    ], style={'margin-bottom': '10px'}),
+                                dbc.Col([
+                                    dbc.Label("Height", className="mb-1"),
+                                    dbc.Input(
+                                        id="graph_height",
+                                        type="number",
+                                        placeholder="e.g., 600",
+                                        step=50,
+                                        persistence=True,
+                                        persistence_type="session",
+                                    )
+                                ], width=6)
+                            ], className="mb-2"),
+                        ], style={"padding": "5px", "margin": "0px"})
+                    ], className="shadow-sm border-0 mb-3")
+                ], width=4),
 
-                    html.Div([
-                        html.Label("Graph Dimensions:", style={'margin-bottom': '5px'}),
-
-                        html.Div([
-                            html.Div([
-                                html.Label("W:", style={'margin-right': '5px'}),
-                                dcc.Input(
-                                    id='graph_width',
-                                    type='number',
-                                    placeholder="e.g., 800",
-                                    step=50,
-                                    persistence=True,
-                                    persistence_type="session",
-                                    style={'width': '80px'}
-                                ),
-                            ], style={'display': 'flex', 'align-items': 'center', 'margin-right': '10px'}),
-
-                            html.Div([
-                                html.Label("H:", style={'margin-right': '5px'}),
-                                dcc.Input(
-                                    id='graph_height',
-                                    type='number',
-                                    placeholder="e.g., 600",
-                                    step=50,
-                                    persistence=True,
-                                    persistence_type="session",
-                                    style={'width': '80px'}
-                                ),
-                            ], style={'display': 'flex', 'align-items': 'center'}),
-                        ], style={'display': 'flex'}),
-                    ], style={'margin-bottom': '10px'}),
-
-                ], style={'width': '20%', 'padding': '10px', 'display': 'inline-block', 'verticalAlign': 'top'}),  # Left section (1/4 width)
-
-                # Right side (Graph) - 3/4 width
-                html.Div([
-                    dcc.Graph(
-                        id='visualization',
-                        config={
-                                'toImageButtonOptions': {
-                                    'format': 'png',
-                                    'filename': 'stacked_bar_plot',
-                                    'height': 600,
-                                    'width': 800,
-                                    'scale': 3
-                                }
-                            },
-                        figure=go.Figure(**stored_graph) if stored_graph and "data" in stored_graph else go.Figure()
-                    )
-                ], style={'width': '75%', 'display': 'flex', 'justifyContent': 'center', 'alignItems': 'flex-start', 'verticalAlign': 'top', 'padding-left': '10px', 'margin-top': '20px'}),  # Right section (3/4 width)
-
-            ], style={'display': 'flex', 'justify-content': 'space-between'}),  # Flex container for alignment
-        ])
+                # Right Section: Graph Output
+                dbc.Col([
+                    dbc.Card([
+                        dbc.CardHeader("Visualization", 
+                                       className="bg-primary text-white", 
+                                       style={"display": "flex", "justifyContent": "center", "alignItems": "center"}),
+                        dbc.CardBody([
+                            dbc.Row([
+                                dbc.Col([
+                                    dcc.Graph(
+                                        id='visualization',
+                                        config={
+                                            'toImageButtonOptions': {
+                                                'format': 'png',
+                                                'filename': 'stacked_bar_plot',
+                                                'height': 600,
+                                                'width': 800,
+                                                'scale': 3
+                                            }
+                                        },
+                                        figure=go.Figure(**stored_graph) if stored_graph and "data" in stored_graph else go.Figure(),
+                                        style={"margin": "auto"}  # Ensures centering
+                                    )
+                                ], width=10, className="d-flex justify-content-center")
+                            ], justify="center")
+                        ])
+                    ], className="shadow-sm border-0 w-100")
+                ], width=8),
+            ])
+        ], fluid=True)
 
     elif tab == "building_analysis":
-        return html.Div([
+        return dbc.Container([
+            dbc.Row([
+                # Left Section: Controls (Dropdowns & Inputs)
+                dbc.Col([
+                    dbc.Card([
+                        dbc.CardHeader("Building Analysis Controls", className="bg-primary text-white"),
+                        dbc.CardBody([
+                            # Select Metrics
+                            dbc.Row([
+                                dbc.Col([
+                                    dbc.Label("Select Metrics (Required):", className="fw-bold"),
+                                    dcc.Dropdown(
+                                        id="numerical-variable",
+                                        options=[
+                                            {"label": col, "value": col}
+                                            for col in wblca_meta_data.select_dtypes(include=["number"]).columns
+                                        ],
+                                        placeholder="Select a feature...",
+                                        persistence=True,
+                                        persistence_type="session",
+                                    )
+                                ], width=12)
+                            ], className="mb-2"),
 
-            # Parent container for layout
-            html.Div([
-                # Left side (Dropdowns & Inputs) - 1/4 width
-                html.Div([
+                            # Select Categories
+                            dbc.Row([
+                                dbc.Col([
+                                    dbc.Label("Select Categories (Required):", className="fw-bold"),
+                                    dcc.Dropdown(
+                                        id="categorical-variable",
+                                        options=[
+                                            {"label": col, "value": col}
+                                            for col in wblca_meta_data.select_dtypes(include=["object", "category"]).columns
+                                        ],
+                                        placeholder="Select a feature...",
+                                        persistence=True,
+                                        persistence_type="session",
+                                    )
+                                ], width=12)
+                            ], className="mb-2"),
 
-                    # Dropdowns for categorical, numerical, and stacking variables
+                            html.Hr(),
 
-                    html.Div([
-                        html.Label("Select Metrics (Required):"),
-                        dcc.Dropdown(
-                            id="numerical-variable",
-                            options=[
-                                {"label": col, "value": col}
-                                for col in wblca_meta_data.select_dtypes(
-                                    include=["number"]
-                                ).columns
-                            ],
-                            placeholder="Select a feature...",
-                            persistence=True,
-                            persistence_type="session",
-                            style={'width': '100%'}
-                        ),
-                    ], style={'marginBottom': '10px'}),
+                            # Add Stacks (Optional)
+                            dbc.Row([
+                                dbc.Col([
+                                    dbc.Label("Add Stacks (Optional):", className="fw-bold"),
+                                    dcc.Dropdown(
+                                        id="stacking-variable",
+                                        options=[
+                                            {"label": col, "value": col}
+                                            for col in wblca_meta_data.select_dtypes(include=["object", "category"]).columns
+                                        ],
+                                        placeholder="Select a feature...",
+                                        persistence=True,
+                                        persistence_type="session",
+                                    )
+                                ], width=12)
+                            ], className="mb-2"),
 
-                    html.Div([
-                        html.Label("Select Categories (Required):"),
-                        dcc.Dropdown(
-                            id="categorical-variable",
-                            options=[
-                                {"label": col, "value": col}
-                                for col in wblca_meta_data.select_dtypes(
-                                    include=["object", "category"]
-                                ).columns
-                            ],
-                            placeholder="Select a feature...",
-                            persistence=True,
-                            persistence_type="session",
-                            style={'width': '100%'}
-                        ),
-                    ], style={'marginBottom': '10px'}),
+                            # Filtering Area
+                            dbc.Row([
+                                dbc.Col([
+                                    dbc.Label("Add Data Filters (Optional):", className="fw-bold"),
+                                    dcc.Dropdown(
+                                        id="filter-categorical-features",
+                                        options=[
+                                            {"label": col, "value": col}
+                                            for col in wblca_meta_data.select_dtypes(include=["object", "category"]).columns
+                                        ],
+                                        placeholder="Select a feature...",
+                                        persistence=True,
+                                        persistence_type="session",
+                                        multi=True,
+                                    ),
+                                    html.Div(id="filter-values-container", className="mt-2"),
+                                ], width=12)
+                            ], className="mb-2"),
 
-                    html.Hr(),
+                            html.Hr(),
 
-                    html.Div([
-                        html.Label("Add Stacks (Optional):"),
-                        dcc.Dropdown(
-                            id="stacking-variable",
-                            options=[
-                                {"label": col, "value": col}
-                                for col in wblca_meta_data.select_dtypes(
-                                    include=["object", "category"]
-                                ).columns
-                            ],
-                            placeholder="Select a feature...",
-                            persistence=True,
-                            persistence_type="session",
-                            style={'width': '100%'}
-                        ),
-                    ], style={'marginBottom': '10px'}),
+                            # Aggregation Method
+                            dbc.Row([
+                                dbc.Col([
+                                    dbc.Label("Aggregation Method:"),
+                                    dbc.RadioItems(
+                                        id="aggregation-method",
+                                        options=[
+                                            {"label": " Sum", "value": "sum"},
+                                            {"label": " Mean", "value": "mean"},
+                                            {"label": " Median", "value": "median"},
+                                            {"label": " Count", "value": "count"},
+                                        ],
+                                        value="mean",
+                                        inline=False,
+                                        persistence=True,
+                                        persistence_type="session",
+                                    )
+                                ], width=12)
+                            ], className="mb-2"),
 
-                    # Filtering Area
-                    html.Div([
-                        html.Div("Add Data Filters (Optional):", style={"marginBottom": "5px"}),
-                        dcc.Dropdown(
-                            id="filter-categorical-features",
-                            options=[
-                                {"label": col, "value": col}
-                                for col in wblca_meta_data.select_dtypes(
-                                    include=["object", "category"]
-                                ).columns
-                            ],
-                            placeholder="Select a feature...",
-                            persistence=True,
-                            persistence_type="session",
-                            multi=True,
-                        ),
-                    ], style={'marginBottom': '10px'}),
+                            # Show Error Bars
+                            dbc.Row([
+                                dbc.Col([
+                                    dbc.Checkbox(
+                                        id="show-error-bars",
+                                        label="Show Error Bars (quartiles)",
+                                        value=False,
+                                        persistence=True,
+                                        persistence_type="session",
+                                    )
+                                ], width=12)
+                            ], className="mb-2"),
 
-                    html.Div(id="filter-values-container", children=[]),
+                            html.Hr(),
 
-                    html.Hr(),
+                            # Graph Orientation
+                            dbc.Row([
+                                dbc.Col([
+                                    dbc.Label("Chart Orientation:"),
+                                    dbc.RadioItems(
+                                        id="graph-orientation",
+                                        options=[
+                                            {"label": " Vertical", "value": "v"},
+                                            {"label": " Horizontal", "value": "h"},
+                                        ],
+                                        value="v",
+                                        inline=False,
+                                        persistence=True,
+                                        persistence_type="session",
+                                    )
+                                ], width=12)
+                            ], className="mb-2"),
 
-                    # Aggregation Method, Error Bars, and Orientation
-                    html.Div([
-                        html.Label("Aggregation Method:"),
-                        dcc.RadioItems(
-                            id="aggregation-method",
-                            options=[
-                                {"label": " Sum", "value": "sum"},
-                                {"label": " Mean", "value": "mean"},
-                                {"label": " Median", "value": "median"},
-                                {"label": " Count", "value": "count"},
-                            ],
-                            value="mean",
-                            inline=False,
-                            persistence=True,
-                            persistence_type="session",
-                        ),
-                    ], style={'marginBottom': '10px'}),
+                            # Graph Dimensions
+                            dbc.Row([
+                                dbc.Col([
+                                    dbc.Label("Graph Dimensions:"),
+                                ], width=12)
+                            ], className="mb-2"),
 
-                    html.Div([
-                        dbc.Checkbox(
-                            id="show-error-bars",
-                            label="Show Error Bars (quartiles)",
-                            value=False,
-                            persistence=True,
-                            persistence_type="session",
-                        ),
-                    ], style={'marginBottom': '10px'}),
+                            dbc.Row([
+                                dbc.Col([
+                                    dbc.Label("Width", className="mb-1"),
+                                    dbc.Input(
+                                        id="graph-width",
+                                        type="number",
+                                        placeholder="e.g., 800",
+                                        step=50,
+                                        persistence=True,
+                                        persistence_type="session",
+                                    )
+                                ], width=6),
 
-                    html.Hr(),
+                                dbc.Col([
+                                    dbc.Label("Height", className="mb-1"),
+                                    dbc.Input(
+                                        id="graph-height",
+                                        type="number",
+                                        placeholder="e.g., 600",
+                                        step=50,
+                                        persistence=True,
+                                        persistence_type="session",
+                                    )
+                                ], width=6)
+                            ], className="mb-2"),
+                        ], style={"padding": "5px", "margin": "0px"})
+                    ], className="shadow-sm border-0 mb-3")
+                ], width=4),
 
-                    html.Div([
-                        html.Label("Orientation:"),
-                        dcc.RadioItems(
-                            id="graph-orientation",
-                            options=[
-                                {"label": " Vertical", "value": "v"},
-                                {"label": " Horizontal", "value": "h"},
-                            ],
-                            value="v",
-                            inline=False,
-                            persistence=True,
-                            persistence_type="session",
-                        ),
-                    ], style={'marginBottom': '10px'}),
-
-                    html.Div([
-                        html.Label("Graph Dimensions:", style={'margin-bottom': '5px'}),
-
-                        html.Div([
-                            html.Div([
-                                html.Label("W:", style={'margin-right': '5px'}),
-                                dcc.Input(
-                                    id='graph-width',
-                                    type='number',
-                                    placeholder="e.g., 800",
-                                    step=50,
-                                    persistence=True,
-                                    persistence_type="session",
-                                    style={'width': '80px'}
+                # Right Section: Graph Output
+                dbc.Col([
+                    dbc.Card([
+                        dbc.CardHeader("Visualization", 
+                                       className="bg-primary text-white", 
+                                       style={"display": "flex", "justifyContent": "center", "alignItems": "center"}
+                                       ),
+                        dbc.CardBody([
+                            dbc.Row(
+                                dbc.Col(
+                                    dcc.Graph(
+                                        id="bar-chart",
+                                        config={
+                                            'toImageButtonOptions': {
+                                                'format': 'png',
+                                                'filename': 'stacked_bar_plot',
+                                                'height': 600,
+                                                'width': 800,
+                                                'scale': 3
+                                            }
+                                        }
+                                    ),
+                                    width="auto",
+                                    className="d-flex justify-content-center"
                                 ),
-                            ], style={'display': 'flex', 'align-items': 'center', 'margin-right': '10px'}),
+                                justify="center"
+                            )
+                        ])
+                    ], className="shadow-sm border-0")
+                ], width=8),
+            ])
+        ], fluid=True)
 
-                            html.Div([
-                                html.Label("H:", style={'margin-right': '5px'}),
-                                dcc.Input(
-                                    id='graph-height',
-                                    type='number',
-                                    placeholder="e.g., 600",
-                                    step=50,
-                                    persistence=True,
-                                    persistence_type="session",
-                                    style={'width': '80px'}
-                                ),
-                            ], style={'display': 'flex', 'align-items': 'center'}),
-                        ], style={'display': 'flex'}),
-                    ], style={'margin-bottom': '10px'}),
-
-                ], style={'width': '20%', 'padding': '10px', 'display': 'inline-block', 'verticalAlign': 'top'}),  # Left section (1/4 width)
-
-                # Right side (Graph) - 3/4 width
-                html.Div([
-                    dcc.Graph(id="bar-chart",
-                                config={
-                                    'toImageButtonOptions': {
-                                        'format': 'png',
-                                        'filename': 'stacked_bar_plot',
-                                        'height': 600,
-                                        'width': 800,
-                                        'scale': 3
-                                    }
-                                }
-                                )
-                ], style={'width': '75%', 'display': 'flex', 'justifyContent': 'center', 'alignItems': 'flex-start', 'verticalAlign': 'top', 'padding-left': '10px', 'margin-top': '20px'}),  # Right section (3/4 width)
-
-            ], style={'display': 'flex', 'justify-content': 'space-between'}),  # Flex container to align sections horizontally
-        ])
-
-# ################# Material level callbacks ########################
+# ################# Material Level Callbacks ########################
 @app.callback(
     Output("filter-values-container-material", "children"),
     Input("filter-categorical-features-material", "value"),
@@ -617,8 +729,7 @@ def update_filter_values_dropdowns_material(selected_features, stored_selections
     for feature in selected_features:
         dropdowns.append(
             dbc.Col([
-                html.Div(f"Filter {feature}:", style={"marginBottom": "5px"}),
-
+                dbc.Label(f"Filter {feature}:", className="fw-bold mb-1"),
                 dcc.Dropdown(
                     id={"type": "filter-value-material", "feature": feature},
                     options=[{"label": val, "value": val} for val in merged_df[feature].dropna().unique()],
@@ -630,7 +741,7 @@ def update_filter_values_dropdowns_material(selected_features, stored_selections
                 ),
             ], width=6)
         )
-    return dropdowns
+    return dbc.Row(dropdowns, className="g-2")  # Apply Bootstrap row layout
 
 
 @app.callback(
@@ -678,109 +789,109 @@ def process_data(
         )
         return empty_fig, {}, empty_fig.to_dict()
 
-    filtered_df = merged_df
+    filtered_df = merged_df.copy()
 
-    # First, apply your filters immediately here:
+    # ✅ Apply filters efficiently
     if filter_features and filter_values:
         for feature, values in zip(filter_features, filter_values):
             if values:
                 filtered_df = filtered_df[filtered_df[feature].isin(values)]
 
-
-    # Initialize annotation text
+    # ✅ Initialize annotation text
     annotation_text = None  
 
-    # Check conditions only if impute_zeros is NOT selected
+    # ✅ Check conditions only if impute_zeros is NOT selected
     if not impute_zeros and primary_categorical_feature and secondary_categorical_feature:
         if (primary_categorical_feature not in wblca_meta_data.columns) and (secondary_categorical_feature not in wblca_meta_data.columns):
-            # Count unique secondary_categorical_feature for each primary_categorical_feature
+            # Count unique mappings between primary and secondary features
             primary_to_secondary_count = filtered_df.groupby(primary_categorical_feature)[secondary_categorical_feature].nunique()
-
-            # Count unique primary_categorical_feature for each secondary_categorical_feature
             secondary_to_primary_count = filtered_df.groupby(secondary_categorical_feature)[primary_categorical_feature].nunique()
 
-            # Check if all values are 1, indicating uniqueness
-            primary_unique_mapping = (primary_to_secondary_count == 1).all()
-            secondary_unique_mapping = (secondary_to_primary_count == 1).all()
+            # Validate uniqueness across mappings
+            primary_unique_mapping = primary_to_secondary_count.eq(1).all()
+            secondary_unique_mapping = secondary_to_primary_count.eq(1).all()
 
-            # If both mappings are NOT unique and impute_zeros is False, set annotation text
+            # If both mappings are NOT unique, set annotation text
             if not primary_unique_mapping and not secondary_unique_mapping:
-                annotation_text = "<b>Use Replacement with Zero<b>"
+                annotation_text = "<b>Use Replacement with Zero</b>"
 
-    impute_zeros = bool(impute_zeros)  # Ensure boolean
+    # ✅ Ensure impute_zeros is a boolean
+    impute_zeros = bool(impute_zeros)  
 
     if impute_zeros:
+        # ✅ Identify primary category sources
         if primary_categorical_feature in wblca_meta_data.columns:
             project_primary_df = wblca_meta_data[['Project Index', primary_categorical_feature]].drop_duplicates()
         else:
             project_primary_df = filtered_df[['Project Index', primary_categorical_feature]].drop_duplicates()
 
+        # ✅ Handle imputation for secondary_categorical_feature
         if secondary_categorical_feature:
             unique_secondary_cat = filtered_df[secondary_categorical_feature].dropna().unique()
-            
-            # Cartesian product of projects, secondary, and primary features
-            full_imputed_df = pd.merge(
+
+            # Generate Cartesian product of projects, secondary categories, and primary categories
+            full_imputed_df = (
                 pd.merge(
-                    pd.DataFrame({'Project Index': filtered_df['Project Index'].unique()}),
-                    pd.DataFrame({secondary_categorical_feature: unique_secondary_cat}),
-                    how='cross'
-                ),
-                project_primary_df,
-                on='Project Index',
-                how='inner'
+                    pd.merge(
+                        pd.DataFrame({'Project Index': filtered_df['Project Index'].unique()}),
+                        pd.DataFrame({secondary_categorical_feature: unique_secondary_cat}),
+                        how='cross'
+                    ),
+                    project_primary_df,
+                    on='Project Index',
+                    how='inner'
+                )
             )
 
+            # Aggregate data at Project-Primary-Secondary category level
             agg_df = filtered_df.groupby(
                 ['Project Index', primary_categorical_feature, secondary_categorical_feature], as_index=False
             )[numerical_feature].sum()
 
+            # Merge and fill missing values with zero
             data_for_aggregation = full_imputed_df.merge(
                 agg_df,
                 on=['Project Index', primary_categorical_feature, secondary_categorical_feature],
                 how='left'
             ).fillna({numerical_feature: 0})
 
-
-        else:  # ✅ Correct logic when ONLY primary_categorical_feature is selected and it's NOT in wblca_meta_data
-            # Get unique projects and primary categorical feature values separately
+        else:  # ✅ Handle imputation when only primary_categorical_feature is selected
             unique_projects = filtered_df['Project Index'].unique()
             unique_primary_categories = filtered_df[primary_categorical_feature].dropna().unique()
 
-            # Generate TRUE cartesian product for zero imputation
+            # Generate Cartesian product for zero imputation
             full_imputed_df = pd.merge(
                 pd.DataFrame({'Project Index': unique_projects}),
                 pd.DataFrame({primary_categorical_feature: unique_primary_categories}),
-                how='cross'  # this guarantees all combinations
+                how='cross'  # Ensures all project-category combinations
             )
 
-            # Now aggregate your actual data at project-category level
+            # Aggregate data at Project-Primary category level
             agg_df = filtered_df.groupby(
                 ['Project Index', primary_categorical_feature], as_index=False
             )[numerical_feature].sum()
 
-            # Merge actual sums back to your full cartesian dataframe, imputing zeros explicitly
+            # Merge and fill missing values with zero
             data_for_aggregation = full_imputed_df.merge(
                 agg_df,
                 on=['Project Index', primary_categorical_feature],
                 how='left'
             ).fillna({numerical_feature: 0})
 
-        # Detect zero-imputation percentage
+        # ✅ Detect zero-imputation percentage
         total_count = filtered_df.shape[0]
         zero_count = (filtered_df[numerical_feature] == 0).sum()
         zero_percentage = (zero_count / total_count) * 100
 
-        high_imputation = zero_percentage > 10
+        high_imputation = zero_percentage > 10  # Flag if over 10% of values are zero-imputed
 
     else:
+        # ✅ No imputation, use the filtered dataframe directly
         data_for_aggregation = filtered_df.copy()
-
-
-
 
     # ✅ Handle aggregation and visualization clearly based on imputation checkbox
     if impute_zeros:
-        # Simplified aggregation, no normalization to primary totals
+        # ✅ Aggregate data based on primary and optional secondary category
         if secondary_categorical_feature:
             agg_df = data_for_aggregation.groupby(
                 [primary_categorical_feature, secondary_categorical_feature],
@@ -792,21 +903,23 @@ def process_data(
                 as_index=False
             )[numerical_feature].agg(aggregation_method_material).rename(columns={numerical_feature: 'aggregated_value'})
 
+        # ✅ Normalize for 100% stacking if selected
         if stacked_100_percent:
             agg_df['aggregated_value'] /= agg_df.groupby(primary_categorical_feature)['aggregated_value'].transform('sum')
             y_label = "Percentage Contribution (%)"
         else:
             y_label = numerical_feature
 
-        # Detect zero-imputation percentage
+        # ✅ Detect zero-imputation percentage
         total_count = data_for_aggregation.shape[0]
         zero_count = (data_for_aggregation[numerical_feature] == 0).sum()
         zero_percentage = (zero_count / total_count) * 100
+        high_imputation = zero_percentage > 60  # Flag if zero-imputation is too high
 
-        high_imputation = zero_percentage > 60
-
+        # ✅ Ensure consistent category ordering
         category_order_agg = sorted(data_for_aggregation[primary_categorical_feature].dropna().unique())
 
+        # ✅ Create Stacked Bar Chart
         fig = px.bar(
             agg_df,
             x=primary_categorical_feature,
@@ -819,9 +932,10 @@ def process_data(
             category_orders={primary_categorical_feature: category_order_agg}
         )
 
-        # Reverse legend order simply by reversing trace order:
+        # ✅ Reverse legend order for better readability
         fig.data = fig.data[::-1]
 
+        # ✅ Update Layout with Bootstrap Styling Considerations
         fig.update_layout(
             font=dict(family="Open Sans", size=12),
             plot_bgcolor="white",
@@ -841,41 +955,46 @@ def process_data(
             )
         )
 
-
-        # ✅ Conditionally add annotation here
+        # ✅ Conditionally Add Annotation for Missing Data Handling
         if annotation_text:
             fig.add_annotation(
                 text=annotation_text,
                 xref='paper', yref='paper',
-                x=0.5, y=1.055,  # Position above the chart
+                x=0.5, y=1.055,  # Slightly above the graph
                 showarrow=False,
                 font=dict(family="Open Sans", color='red', size=14),
                 align='center'
             )
 
-
-        # Conditionally add annotation
+        # ✅ Conditionally Add Warning for Excessive Zero Imputation
         if high_imputation:
-            warning_text = "<b>Too Many Zero Replacements ⚠️<b>"
+            warning_text = "<b>Too Many Zero Replacements ⚠️</b>"
             fig.add_annotation(
                 text=warning_text,
                 xref='paper', yref='paper',
-                x=0.5, y=1.055,  # top-center
+                x=0.5, y=1.055,  # Higher position for better visibility
                 showarrow=False,
                 font=dict(family="Open Sans", color='red', size=14),
                 align='center'
             )
+
+            # ✅ Bootstrap Alert for UI Notification
+            bootstrap_warning = dbc.Alert(
+                "Warning: Too many zero replacements in the dataset. This may affect data accuracy.",
+                color="warning",
+                dismissable=True,
+                className="mt-2"
+            )
         else:
-            warning_text = ""
+            bootstrap_warning = None
 
         return fig, {}, fig.to_dict()
 
     # ✅ Else, follow your original normalization logic:
     else:
 
-
         if primary_categorical_feature in wblca_meta_data.columns:
-        #### Code 1 ####
+            #### Code 1 ####
             # ✅ Step 1: Compute total material intensity per project
             project_totals = (
                 data_for_aggregation.groupby('Project Index')[numerical_feature]
@@ -884,29 +1003,23 @@ def process_data(
                 .rename(columns={numerical_feature: 'total_material_intensity'})
             )
 
-            # ✅ Step 2: Compute total material intensity by primary_categorical_feature (Mean or Median)
+            # ✅ Step 2: Merge total intensity with primary categorical feature
             project_totals = project_totals.merge(
                 data_for_aggregation[['Project Index', primary_categorical_feature]].drop_duplicates(),
                 on='Project Index',
                 how='left'
             )
 
-            if aggregation_method_material == "mean":
-                totals_by_primary_category = (
-                    project_totals.groupby(primary_categorical_feature)['total_material_intensity']
-                    .mean()
-                    .reset_index()
-                    .rename(columns={'total_material_intensity': 'primary_category_aggregate'})
-                )
-            else:  # Median
-                totals_by_primary_category = (
-                    project_totals.groupby(primary_categorical_feature)['total_material_intensity']
-                    .median()
-                    .reset_index()
-                    .rename(columns={'total_material_intensity': 'primary_category_aggregate'})
-                )
+            # ✅ Compute mean or median for total intensity by primary_categorical_feature
+            aggregation_function = "mean" if aggregation_method_material == "mean" else "median"
+            totals_by_primary_category = (
+                project_totals.groupby(primary_categorical_feature)['total_material_intensity']
+                .agg(aggregation_function)
+                .reset_index()
+                .rename(columns={'total_material_intensity': 'primary_category_aggregate'})
+            )
 
-            # ✅ If secondary_categorical_feature is None, generate a simple bar chart
+            # ✅ If no secondary_categorical_feature, generate a simple bar chart
             if not secondary_categorical_feature:
                 fig = go.Figure()
                 fig.add_trace(go.Bar(
@@ -916,9 +1029,10 @@ def process_data(
                     marker=dict(color='#49a5c4')
                 ))
 
-                # Reverse legend order simply by reversing trace order:
+                # ✅ Reverse legend order for better readability
                 fig.data = fig.data[::-1]
 
+                # ✅ Update layout with Bootstrap styling considerations
                 fig.update_layout(
                     title=f"Bar Chart of {numerical_feature} by {primary_categorical_feature} ({aggregation_method_material.capitalize()})",
                     xaxis_title=primary_categorical_feature,
@@ -962,18 +1076,11 @@ def process_data(
             )
 
             # ✅ Step 4: Compute mean/median contributions by primary_categorical_feature
-            if aggregation_method_material == "mean":
-                contribution_means = (
-                    contributions.groupby([primary_categorical_feature, secondary_categorical_feature])['secondary_category_contribution']
-                    .mean()
-                    .reset_index()
-                )
-            else:  # Median
-                contribution_means = (
-                    contributions.groupby([primary_categorical_feature, secondary_categorical_feature])['secondary_category_contribution']
-                    .median()
-                    .reset_index()
-                )
+            contribution_means = (
+                contributions.groupby([primary_categorical_feature, secondary_categorical_feature])['secondary_category_contribution']
+                .agg(aggregation_function)
+                .reset_index()
+            )
 
             # ✅ Step 5: Normalize contributions to sum to 100%
             contribution_means['normalized_contribution'] = (
@@ -997,41 +1104,40 @@ def process_data(
             # ✅ Normalize values for 100% stacking mode
             if stacked_100_percent:
                 total_per_category = output_df.groupby(primary_categorical_feature)['normalized_agg_contribution'].transform('sum')
-                output_df['normalized_agg_contribution'] = output_df['normalized_agg_contribution'] / total_per_category
+                output_df['normalized_agg_contribution'] /= total_per_category
                 y_label = "Percentage Contribution (%)"
             else:
                 y_label = numerical_feature
 
-            # Define a persistent color mapping
+            # ✅ Generate Color Mapping for Visualization
             def generate_color_map(categories):
                 """Generate a distinct color for each category using a colormap"""
                 cmap = cm.get_cmap('tab20', len(categories))  # Use a colormap with many distinct colors
                 color_map = {category: f"rgb{tuple(int(255*x) for x in cmap(i)[:3])}" for i, category in enumerate(categories)}
                 return color_map
 
-            # Generate color mapping based on unique secondary_categorical_feature
             unique_secondary_cat = output_df[secondary_categorical_feature].unique()
             color_mapping = generate_color_map(unique_secondary_cat)
 
             category_order = sorted(output_df[primary_categorical_feature].dropna().unique())
 
-            # Apply the color mapping in the plot
+            # ✅ Create Stacked Bar Chart
             fig = px.bar(
                 output_df,
                 x=primary_categorical_feature,
                 y="normalized_agg_contribution",
                 color=secondary_categorical_feature,
                 barmode="relative" if stacked_100_percent else "stack",
-                # color_discrete_map=color_mapping,  # ✅ Apply custom color mapping
                 labels={primary_categorical_feature: primary_categorical_feature, "normalized_agg_contribution": y_label},
                 color_discrete_sequence=px.colors.qualitative.Vivid,
                 title=f"Stacked Bar Plot of {secondary_categorical_feature} Contributions by {primary_categorical_feature} ({aggregation_method_material.capitalize()})",
-                category_orders={primary_categorical_feature: category_order}  # <-- add this line
+                category_orders={primary_categorical_feature: category_order}  
             )
 
-            # Reverse legend order simply by reversing trace order:
+            # ✅ Reverse legend order for better readability
             fig.data = fig.data[::-1]
 
+            # ✅ Update layout with Bootstrap styling considerations
             fig.update_layout(
                 font=dict(family="Open Sans", size=12),
                 plot_bgcolor="white",
@@ -1051,20 +1157,18 @@ def process_data(
                 ),
             )
             
-            # ✅ Conditionally add annotation here
+            # ✅ Conditionally Add Annotation for Missing Data Handling
             if annotation_text:
                 fig.add_annotation(
                     text=annotation_text,
                     xref='paper', yref='paper',
-                    x=0.5, y=1.055,  # Position above the chart
+                    x=0.5, y=1.055,  
                     showarrow=False,
                     font=dict(family="Open Sans", color='red', size=14),
                     align='center'
                 )
 
-            
             return fig, {}, fig.to_dict()
-
 
         else:
             #### Code 2 ####
@@ -1076,20 +1180,13 @@ def process_data(
             )
 
             # ✅ Choose aggregation method based on user selection
-            if aggregation_method_material == "mean":
-                primary_category_stats = (
-                    project_grouped_prim.groupby(primary_categorical_feature)[numerical_feature]
-                    .mean()
-                    .reset_index()
-                    .rename(columns={numerical_feature: 'primary_category_aggregate'})
-                )
-            else:  # Median
-                primary_category_stats = (
-                    project_grouped_prim.groupby(primary_categorical_feature)[numerical_feature]
-                    .median()
-                    .reset_index()
-                    .rename(columns={numerical_feature: 'primary_category_aggregate'})
-                )
+            aggregation_function = "mean" if aggregation_method_material == "mean" else "median"
+            primary_category_stats = (
+                project_grouped_prim.groupby(primary_categorical_feature)[numerical_feature]
+                .agg(aggregation_function)
+                .reset_index()
+                .rename(columns={numerical_feature: 'primary_category_aggregate'})
+            )
 
             # ✅ If no stacking, generate a simple bar chart
             if not secondary_categorical_feature:
@@ -1101,9 +1198,10 @@ def process_data(
                     marker=dict(color='#49a5c4')
                 ))
 
-                # Reverse legend order simply by reversing trace order:
+                # ✅ Reverse legend order for better readability
                 fig.data = fig.data[::-1]
 
+                # ✅ Update layout with Bootstrap styling considerations
                 fig.update_layout(
                     title=f"Bar Chart of {numerical_feature} by {primary_categorical_feature} ({aggregation_method_material.capitalize()})",
                     xaxis_title=primary_categorical_feature,
@@ -1123,7 +1221,7 @@ def process_data(
                         type="log" if log_y_axis else "linear"
                     ) if not stacked_100_percent else dict(
                         showgrid=True, gridcolor='rgba(200, 200, 200, 0.5)'
-                    )  # ✅ Log scale only when not 100% stacked
+                    )
                 )
                 
                 # ✅ Conditionally add annotation here
@@ -1131,13 +1229,12 @@ def process_data(
                     fig.add_annotation(
                         text=annotation_text,
                         xref='paper', yref='paper',
-                        x=0.5, y=1.055,  # Position above the chart
+                        x=0.5, y=1.055,
                         showarrow=False,
                         font=dict(family="Open Sans", color='red', size=14),
                         align='center'
                     )
 
-                
                 return fig, {}, fig.to_dict()
 
             # ✅ Compute total per secondary_categorical_feature (mean or median based on user selection)
@@ -1147,20 +1244,12 @@ def process_data(
                 .reset_index()
             )
 
-            if aggregation_method_material == "mean":
-                secondary_category_stats = (
-                    project_grouped_sec.groupby(secondary_categorical_feature)[numerical_feature]
-                    .mean()
-                    .reset_index()
-                    .rename(columns={numerical_feature: 'secondary_aggregate'})
-                )
-            else:  # Median
-                secondary_category_stats = (
-                    project_grouped_sec.groupby(secondary_categorical_feature)[numerical_feature]
-                    .median()
-                    .reset_index()
-                    .rename(columns={numerical_feature: 'secondary_aggregate'})
-                )
+            secondary_category_stats = (
+                project_grouped_sec.groupby(secondary_categorical_feature)[numerical_feature]
+                .agg(aggregation_function)
+                .reset_index()
+                .rename(columns={numerical_feature: 'secondary_aggregate'})
+            )
 
             # ✅ Map secondary_categorical_feature to primary_categorical_feature
             sec_to_primary = data_for_aggregation[[primary_categorical_feature, secondary_categorical_feature]].drop_duplicates()
@@ -1171,26 +1260,29 @@ def process_data(
 
             # ✅ Calculate **contribution percentage** per primary category
             secondary_category_stats['contribution'] = (
-                secondary_category_stats['secondary_aggregate'] / secondary_category_stats.groupby(primary_categorical_feature)['secondary_aggregate'].transform('sum')
+                secondary_category_stats['secondary_aggregate'] /
+                secondary_category_stats.groupby(primary_categorical_feature)['secondary_aggregate'].transform('sum')
             )
 
             # ✅ Normalize contributions based on primary_categorical_feature stats
-            secondary_category_stats['normalized_agg'] = secondary_category_stats['contribution'] * secondary_category_stats['primary_category_aggregate']
+            secondary_category_stats['normalized_agg'] = (
+                secondary_category_stats['contribution'] * secondary_category_stats['primary_category_aggregate']
+            )
 
             # ✅ Prepare final dataframe for visualization
             output_df = secondary_category_stats[
                 [primary_categorical_feature, secondary_categorical_feature, 'normalized_agg', 'contribution']
-            ]#.sort_values(by=[primary_categorical_feature, 'normalized_agg'], ascending=[True, False])
+            ]
 
             # ✅ Normalize values for 100% stacking mode
             if stacked_100_percent:
                 total_per_category = output_df.groupby(primary_categorical_feature)['normalized_agg'].transform('sum')
-                output_df['normalized_agg'] = output_df['normalized_agg'] / total_per_category
+                output_df['normalized_agg'] /= total_per_category
                 y_label = "Percentage Contribution (%)"
             else:
                 y_label = numerical_feature
 
-            # Consistently sorted category order (alphabetically)
+            # ✅ Consistently sorted category order
             category_order = sorted(
                 data_for_aggregation[primary_categorical_feature]
                 .dropna()
@@ -1211,9 +1303,10 @@ def process_data(
                 title=f"Stacked Bar Plot of {secondary_categorical_feature} Contributions by {primary_categorical_feature} ({aggregation_method_material.capitalize()})",
             )
 
-            # Reverse legend order simply by reversing trace order:
+            # ✅ Reverse legend order for better readability
             fig.data = fig.data[::-1]
 
+            # ✅ Update layout with Bootstrap styling considerations
             fig.update_layout(
                 font=dict(family="Open Sans", size=12),
                 plot_bgcolor="white",
@@ -1229,7 +1322,7 @@ def process_data(
                     gridwidth=0.5,
                     type="log" if log_y_axis else "linear",
                     tickformat=".0%" if stacked_100_percent else None,
-                    range=[0, 1] if stacked_100_percent else None  # ✅ Ensures 0-100% range for stacked mode
+                    range=[0, 1] if stacked_100_percent else None
                 ),
             )
 
@@ -1238,7 +1331,7 @@ def process_data(
                 fig.add_annotation(
                     text=annotation_text,
                     xref='paper', yref='paper',
-                    x=0.5, y=1.055,  # Position above the chart
+                    x=0.5, y=1.055,
                     showarrow=False,
                     font=dict(family="Open Sans", color='red', size=14),
                     align='center'
@@ -1246,8 +1339,7 @@ def process_data(
 
             return fig, {}, fig.to_dict()
 
-
-################## Building level callbacks ########################
+################## Building Level Callbacks ########################
 
 # ✅ Callback to dynamically generate filter dropdowns based on selected categorical features
 @app.callback(
@@ -1266,9 +1358,7 @@ def update_filter_values_dropdowns(selected_features, stored_selections):
         dropdowns.append(
             dbc.Col(
                 [
-                    html.Div(f"Filter {feature}:", style={"marginBottom": "5px"}),
-
-                    # ✅ Restore previously selected values
+                    dbc.Label(f"Filter {feature}:", className="fw-bold mb-1"),
                     dcc.Dropdown(
                         id={"type": "filter-value", "feature": feature},
                         options=[
@@ -1284,8 +1374,7 @@ def update_filter_values_dropdowns(selected_features, stored_selections):
                 width=6,
             )
         )
-    return dropdowns
-
+    return dbc.Row(dropdowns, className="g-2")  # ✅ Apply Bootstrap row layout for alignment
 
 @app.callback(
     Output("building-level-selections", "data"),
@@ -1298,7 +1387,6 @@ def store_selected_filter_values(filter_values, selected_features):
         return {}
 
     return {feature: values for feature, values in zip(selected_features, filter_values) if values}
-
 
 @app.callback(
     Output("bar-chart", "figure"),
@@ -1335,22 +1423,22 @@ def update_bar_chart(
         )
         return empty_fig
 
-    # Filter the data based on selected filters
-    filtered_data = wblca_meta_data
+    # ✅ Filter the data based on selected filters
+    filtered_data = wblca_meta_data.copy()
     if filter_features and filter_values:
         for feature, values in zip(filter_features, filter_values):
             if values:
                 filtered_data = filtered_data[filtered_data[feature].isin(values)]
 
-    # Ensure a primary categorical variable is selected
+    # ✅ Ensure a primary categorical variable is selected
     if not categorical:
         return {}
 
-    # Get unique sorted categories to maintain consistent order
+    # ✅ Get unique sorted categories to maintain consistent order
     sorted_categories = sorted(filtered_data[categorical].dropna().unique())
 
     if stacking:
-        # Handle stacked bar chart
+        # ✅ Handle stacked bar chart
         if aggregation in ["mean", "median"]:
             # Calculate overall aggregation per primary category
             overall_agg = (
@@ -1373,75 +1461,66 @@ def update_bar_chart(
                 contributions[numerical] / contributions.groupby(categorical)[numerical].transform("sum")
             ) * contributions["OverallAggregate"]
 
-            # Set x, y, and color for the stacked chart
-            x = categorical
-            y = "Contribution"
-            color = stacking
+            x, y, color = categorical, "Contribution", stacking
+
         elif aggregation == "count":
             contributions = filtered_data.groupby([categorical, stacking]).size().reset_index(name="Count")
-            x = categorical
-            y = "Count"
-            color = stacking
+            x, y, color = categorical, "Count", stacking
+
         elif categorical and numerical:
             contributions = (
                 filtered_data.groupby([categorical, stacking])[numerical]
                 .sum()
                 .reset_index()
             )
-            x = categorical
-            y = numerical
-            color = stacking
+            x, y, color = categorical, numerical, stacking
+
         else:
             return {}
+
     else:
-        # Handle regular bar chart without stacking
+        # ✅ Handle regular bar chart without stacking
         if aggregation == "count":
             grouped_data = filtered_data[categorical].value_counts().reset_index()
             grouped_data.columns = [categorical, "Count"]
-            x = categorical
-            y = "Count"
-            color = None
+            x, y, color = categorical, "Count", None
+
         elif categorical and numerical:
             grouped_data = filtered_data.groupby(categorical).agg(
                 {numerical: [aggregation, "count", lambda x: x.quantile(0.25), lambda x: x.quantile(0.75)]}
             ).reset_index()
             grouped_data.columns = [categorical, "Value", "Count", "Q1", "Q3"]
 
-            # Add error bars only if checkbox is checked and the aggregation method is mean or median
+            # ✅ Add error bars only if checkbox is checked
             if show_error_bars and aggregation in ["mean", "median"]:
                 grouped_data["ErrorMinus"] = grouped_data["Value"] - grouped_data["Q1"]
                 grouped_data["ErrorPlus"] = grouped_data["Q3"] - grouped_data["Value"]
             else:
-                grouped_data["ErrorMinus"] = None
-                grouped_data["ErrorPlus"] = None
+                grouped_data["ErrorMinus"], grouped_data["ErrorPlus"] = None, None
 
-            x = categorical
-            y = "Value"
-            color = None
+            x, y, color = categorical, "Value", None
+
         else:
             return {}
 
-    # Create the y-axis label dynamically
-    if stacking:
-        y_axis_label = f"{numerical} (Contributions by '{stacking}')"
-    else:
-        y_axis_label = numerical if aggregation != "count" else "Count"
+    # ✅ Dynamically set y-axis label
+    y_axis_label = f"{numerical} (Contributions by '{stacking}')" if stacking else (numerical if aggregation != "count" else "Count")
 
-    # Swap x and y for horizontal orientation
+    # ✅ Adjust axes for horizontal orientation
     if orientation == "h":
         x, y = y, x
-        x_axis_label = y_axis_label
-        y_axis_label = categorical
-        error_bar_plus = "ErrorPlus" if show_error_bars and aggregation in ["mean", "median"] else None
-        error_bar_minus = "ErrorMinus" if show_error_bars and aggregation in ["mean", "median"] else None
-        error_bar_args = {"error_x": error_bar_plus, "error_x_minus": error_bar_minus}
+        x_axis_label, y_axis_label = y_axis_label, categorical
+        error_bar_args = {
+            "error_x": "ErrorPlus" if show_error_bars and aggregation in ["mean", "median"] else None,
+            "error_x_minus": "ErrorMinus" if show_error_bars and aggregation in ["mean", "median"] else None,
+        }
     else:
-        x_axis_label = categorical
-        error_bar_plus = "ErrorPlus" if show_error_bars and aggregation in ["mean", "median"] else None
-        error_bar_minus = "ErrorMinus" if show_error_bars and aggregation in ["mean", "median"] else None
-        error_bar_args = {"error_y": error_bar_plus, "error_y_minus": error_bar_minus}
+        x_axis_label, error_bar_args = categorical, {
+            "error_y": "ErrorPlus" if show_error_bars and aggregation in ["mean", "median"] else None,
+            "error_y_minus": "ErrorMinus" if show_error_bars and aggregation in ["mean", "median"] else None,
+        }
 
-    # Create the figure
+    # ✅ Generate Bar Chart
     fig = px.bar(
         grouped_data if not stacking else contributions,
         x=x,
@@ -1451,17 +1530,15 @@ def update_bar_chart(
         orientation=orientation,
         title=f"Bar Chart of {numerical if aggregation != 'count' else 'Counts'} by {categorical}"
               + (f" (Stacked by {stacking})" if stacking else ""),
-        category_orders={categorical: sorted_categories},  # Maintain consistent order
-        labels={
-            x: x_axis_label,
-            y: y_axis_label,
-        },
-        **error_bar_args,  # Dynamically add error bars
+        category_orders={categorical: sorted_categories},  # ✅ Maintain category order
+        labels={x: x_axis_label, y: y_axis_label},
+        **error_bar_args,  # ✅ Dynamically add error bars
     )
 
-    # Reverse legend order simply by reversing trace order:
+    # ✅ Reverse legend order for better readability
     fig.data = fig.data[::-1]
 
+    # ✅ Apply Bootstrap Styling to Chart Layout
     fig.update_layout(
         font=dict(family="Open Sans", size=12),
         width=width if width else 800,
@@ -1473,8 +1550,9 @@ def update_bar_chart(
         xaxis=dict(showgrid=orientation == "h", gridcolor="lightgray", gridwidth=0.5),
         yaxis=dict(showgrid=orientation == "v", gridcolor="lightgray", gridwidth=0.5),
     )
+
     return fig
 
-# ✅ Ensure This Works with Gunicorn
-if __name__ == "__main__":
-    app.run_server(host="0.0.0.0", port=8050)
+# ✅ Run Server
+if __name__ == '__main__':
+    app.run_server(debug=True, port=8050)
