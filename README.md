@@ -179,7 +179,7 @@ The Supplementary Materials used in the academic article supported by this repos
 Life Cycle Lab, University of Washington  
 📧 Email: ashtiani@uw.edu
 
-
+---
 
 ## 📌 Data Glossary
 
