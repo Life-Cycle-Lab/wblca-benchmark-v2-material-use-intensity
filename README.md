@@ -252,3 +252,7 @@ Life Cycle Lab, University of Washington
 | Material Level | gwp | Global Warming Potential (kgCO₂e) | Total global warming potential of the corresponding material and life cycle stage | kgCO₂e |
 | Material Level | MUI (kg/m²) | MUI (kg/m²) | Material use intensity (MUI) of the individual material calculated from material’s mass normalized by constructed floor area. | kgCO₂e/m² |
 | Material Level | ECI (kgCO₂e/m²) | ECI (kgCO₂e/m²) | Embodied carbon intensity (ECI) of the individual material calculated from material’s embodied carbon normalized by constructed floor area. | kg/m² |
+
+---
+
+End of Documentation
