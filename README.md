@@ -1,7 +1,7 @@
 # Material Use and Embodied Carbon Intensity of New Construction Buildings in North America
 A codebase and analyzed dataset of material use and embodied carbon intensity for new construction buildings in North America. This repository and its accompanying publications are the results of joint collaboration between Carbon Leadership Forum (CLF) and Life Cycle Lab (LCL) through their Whole Building Life Cycle Assessment (WBLCA) Benchmarking V2 study in 2025. This work investigates material use intensity (MUI) and embodied carbon intensity (ECI) in 243 North American buildings using WBLCA models. Results are published alongside open-source code and a public dashboard for exploring MUI and ECI across building typologies, structural systems, and materials. Also included in this repository are codes and data used to build the dashboard with [Plotly Dash](https://dash.plotly.com/) – a Python framework for interactive web applications.
 
-🧾 **Note:** All analysis code is written in **[Jupyter Notebooks](https://jupyter.org/)**, which are included in the main directory.
+🧾 **Note:** All analysis code is written in [Jupyter Notebooks](https://jupyter.org/), which are included in the main directory.
 
 [![Dashboard](https://img.shields.io/badge/Dashboard-Explore-blue)](https://wblca-benchmark-v2-mui-dash-2-b01cf7c96c61.herokuapp.com/)  
 [![GitHub Repo](https://img.shields.io/badge/Code%20and%20Data-GitHub-lightgrey)](https://github.com/Life-Cycle-Lab/wblca-benchmark-v2-material-use-embodied-carbon-intensity)
