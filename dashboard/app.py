@@ -454,7 +454,7 @@ def render_tab_content(tab, stored_selections, stored_graph):
                             ], className="mb-2"),
                         ], style={"padding": "5px", "margin": "0px"})
                     ], className="shadow-sm border-0 mb-3")
-                ], width=3.5),
+                ], width=4),
 
                 # Right Section: Graph Output
                 dbc.Col([
@@ -483,7 +483,7 @@ def render_tab_content(tab, stored_selections, stored_graph):
                             ], justify="center")
                         ])
                     ], className="shadow-sm border-0 w-100")
-                ], width=8.5),
+                ], width=8),
             ])
         ], fluid=True)
 
@@ -656,7 +656,7 @@ def render_tab_content(tab, stored_selections, stored_graph):
                             ], className="mb-2"),
                         ], style={"padding": "5px", "margin": "0px"})
                     ], className="shadow-sm border-0 mb-3")
-                ], width=3.5),
+                ], width=4),
 
                 # Right Section: Graph Output
                 dbc.Col([
@@ -687,7 +687,7 @@ def render_tab_content(tab, stored_selections, stored_graph):
                             )
                         ])
                     ], className="shadow-sm border-0")
-                ], width=8.5),
+                ], width=8),
             ])
         ], fluid=True)
 
