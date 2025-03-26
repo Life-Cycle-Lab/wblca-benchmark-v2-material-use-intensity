@@ -170,19 +170,19 @@ app.layout = dbc.Container([
         [
             dbc.Tab(label="Introduction", tab_id="instructions",
                     tab_style={"width": "25%", "textAlign": "center"},
-                    active_tab_style={"fontWeight": "bold", "textAlign": "center"}),
+                    active_tab_style={"fontWeight": "bold", "textAlign": "center", "fontSize": "18px"}),
 
             dbc.Tab(label="Data Glossary", tab_id="glossary",
                     tab_style={"width": "25%", "textAlign": "center"},
-                    active_tab_style={"fontWeight": "bold", "textAlign": "center"}),
+                    active_tab_style={"fontWeight": "bold", "textAlign": "center", "fontSize": "18px"}),
 
             dbc.Tab(label="Material Level Analysis", tab_id="material_analysis",
                     tab_style={"width": "25%", "textAlign": "center"},
-                    active_tab_style={"fontWeight": "bold", "textAlign": "center"}),
+                    active_tab_style={"fontWeight": "bold", "textAlign": "center", "fontSize": "18px"}),
 
             dbc.Tab(label="Building Level Analysis", tab_id="building_analysis",
                     tab_style={"width": "25%", "textAlign": "center"},
-                    active_tab_style={"fontWeight": "bold", "textAlign": "center"}),
+                    active_tab_style={"fontWeight": "bold", "textAlign": "center", "fontSize": "18px"}),
         ],
         id="tabs",
         active_tab="instructions",
