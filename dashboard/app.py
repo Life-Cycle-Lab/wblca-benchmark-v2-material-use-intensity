@@ -263,8 +263,11 @@ def render_tab_content(tab, stored_selections, stored_graph):
                         ]),
                         html.Br(),
 
-                        
                         html.P("For questions, contact ashtiani@uw.edu. Enjoy exploring!", className="text-center mt-3"),
+                        html.P([
+                            "Want to provide feedback? ",
+                            html.A("Fill out this short survey", href="https://forms.gle/uzBwmWFB9DLUAh6r8", className="text-primary", target="_blank")
+                        ], className="text-center mt-1"),
                         html.P([
                             "(",
                             html.A("CC BY 4.0", href="http://creativecommons.org/licenses/by/4.0/", className="text-primary"),
