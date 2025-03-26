@@ -17,56 +17,6 @@ app = dash.Dash(
 )
 server = app.server
 
-# # ✅ Define Absolute Paths for Data Files
-# BASE_DIR = os.path.dirname(os.path.abspath(__file__))  # Get current script directory
-# DATA_DIR = os.path.join(BASE_DIR, "data")
-# ASSETS_DIR = os.path.join(BASE_DIR, "assets")
-
-# # ✅ Load Data Files Safely
-# wblca_results_path = os.path.join(DATA_DIR, "full_lca_results_02-21-2025_a1_to_a3.csv")
-# wblca_meta_data_path = os.path.join(DATA_DIR, "buildings_metadata_02-21-2025_a1_to_a3_new_construction.xlsx")
-
-# # ✅ Ensure Files Exist Before Loading
-# if os.path.exists(wblca_results_path):
-#     wblca_results_full = pd.read_csv(wblca_results_path, na_values=["NA", "NULL"])
-# else:
-#     raise FileNotFoundError(f"Missing file: {wblca_results_path}")
-
-# if os.path.exists(wblca_meta_data_path):
-#     wblca_meta_data = pd.read_excel(wblca_meta_data_path, na_values=["NA", "NULL"])
-# else:
-#     raise FileNotFoundError(f"Missing file: {wblca_meta_data_path}")
-
-# # Ensure 'Project Index' is a string for merging
-# wblca_results_full['Project Index'] = wblca_results_full['Project Index'].astype(str)
-# wblca_meta_data['Project Index'] = wblca_meta_data['Project Index'].astype(str)
-
-# # **Force conversion of specific columns to numeric**
-# numeric_cols = ["Inventory Mass (kg)", "Global Warming Potential (kgCO₂e)"]
-# for col in numeric_cols:
-#     wblca_results_full[col] = pd.to_numeric(wblca_results_full[col], errors='coerce')
-
-# # Perform a left join on 'Project Index'
-# merged_df = pd.merge(wblca_results_full, wblca_meta_data, on="Project Index", how="left")
-
-# # Compute derived columns safely
-# merged_df['MUI (kg/m²)'] = np.where(
-#     merged_df['Constructed Floor Area (m²)'] != 0, merged_df['Inventory Mass (kg)'] / merged_df['Constructed Floor Area (m²)'], np.nan)
-
-# merged_df['ECI (kgCO₂e/m²)'] = np.where(
-#     merged_df['Constructed Floor Area (m²)'] != 0, merged_df['Global Warming Potential (kgCO₂e)'] / merged_df['Constructed Floor Area (m²)'], np.nan)
-
-
-
-# # Rename some feature names:
-# wblca_meta_data.rename(columns={
-#     'total_mass_a1_to_a3': 'Total Mass (kg)',
-#     'total_gwp_a1_to_a3': 'Total GWP (kgCO₂e)',
-#     'total_mui_a1_to_a3': 'Total MUI (kg/m²)',
-#     'total_eci_a1_to_a3': 'Total ECI (kgCO₂e/m²)',
-# }, inplace=True)
-
-
 # ✅ Define Absolute Paths for Data Files
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))  # Get current script directory
 DATA_DIR = os.path.join(BASE_DIR, "data")
@@ -504,7 +454,7 @@ def render_tab_content(tab, stored_selections, stored_graph):
                             ], className="mb-2"),
                         ], style={"padding": "5px", "margin": "0px"})
                     ], className="shadow-sm border-0 mb-3")
-                ], width=4),
+                ], width=3),
 
                 # Right Section: Graph Output
                 dbc.Col([
@@ -533,7 +483,7 @@ def render_tab_content(tab, stored_selections, stored_graph):
                             ], justify="center")
                         ])
                     ], className="shadow-sm border-0 w-100")
-                ], width=8),
+                ], width=9),
             ])
         ], fluid=True)
 
@@ -706,7 +656,7 @@ def render_tab_content(tab, stored_selections, stored_graph):
                             ], className="mb-2"),
                         ], style={"padding": "5px", "margin": "0px"})
                     ], className="shadow-sm border-0 mb-3")
-                ], width=4),
+                ], width=3),
 
                 # Right Section: Graph Output
                 dbc.Col([
@@ -737,7 +687,7 @@ def render_tab_content(tab, stored_selections, stored_graph):
                             )
                         ])
                     ], className="shadow-sm border-0")
-                ], width=8),
+                ], width=9),
             ])
         ], fluid=True)
 
