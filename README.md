@@ -12,15 +12,13 @@ A codebase and analyzed dataset of material use and embodied carbon intensity fo
 If you use this work, please cite it as:
 
 ```
-Ashtiani, M., Benke, B., Shen, Y., Simonen, K. (2025). 
-Material Use and Embodied Carbon Intensity of New Construction Buildings in North America. 
-Preprint. DOI: 
+Ashtiani, M., Benke, B., Shen, Y., Simonen, K. (2025). Material Use and Embodied Carbon Intensity of New Construction Buildings in North America. PREPRINT (Version 1) available at Research Square https://doi.org/10.21203/rs.3.rs-6315460/v1
 ```
 
 ---
 
 ## 🔗 Links
-
+- [**Preprint Article**](https://www.researchsquare.com/article/rs-6315460/v1)
 - [**Dashboard**](https://wblca-benchmark-v2-mui-dash-2-b01cf7c96c61.herokuapp.com/)
 - [**Code & Data**](https://github.com/Life-Cycle-Lab/wblca-benchmark-v2-material-use-embodied-carbon-intensity)
 
