@@ -195,7 +195,11 @@ def render_tab_content(tab, stored_selections, stored_graph):
                         
                         html.H4("Resources:", className="mt-4", style={"fontSize": "18px"}),
                         html.Ul([
-                            html.Li("Ashtiani et al. Material Use and Embodied Carbon Intensity of New Construction Buildings in North America. (Pre-print)"),
+                            html.Li(html.A("Ashtiani et al. Material Use and Embodied Carbon Intensity of New Construction Buildings in North America. (Preprint)", 
+                                        href="https://www.researchsquare.com/article/rs-6315460/v1", 
+                                        target="_blank", 
+                                        className="text-primary")),
+
                             html.Li(html.A("CLF's WBLCA Benchmark Study v2", 
                                         href="https://carbonleadershipforum.org/clf-wblca-v2/", 
                                         target="_blank", 
