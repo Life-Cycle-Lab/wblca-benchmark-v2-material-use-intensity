@@ -19,7 +19,7 @@ Ashtiani, M., Benke, B., Shen, Y., Simonen, K. (2025). Material Use and Embodied
 
 ## 🔗 Links
 - [**Preprint Article**](https://www.researchsquare.com/article/rs-6315460/v1)
-- [**Dashboard**](https://wblca-benchmark-v2-mui-dash-2-b01cf7c96c61.herokuapp.com/)
+- [**Dashboard**](https://wblca-benchmark-v2-mui-eci.lifecyclelab.org/)
 - [**Code & Data**](https://github.com/Life-Cycle-Lab/wblca-benchmark-v2-material-use-embodied-carbon-intensity)
 
 
