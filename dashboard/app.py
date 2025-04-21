@@ -200,6 +200,11 @@ def render_tab_content(tab, stored_selections, stored_graph):
                                         target="_blank", 
                                         className="text-primary")),
 
+                            html.Li(html.A("Life Cycle Lab's GitHub Repository", 
+                                        href="https://github.com/Life-Cycle-Lab/wblca-benchmark-v2-material-use-embodied-carbon-intensity", 
+                                        target="_blank", 
+                                        className="text-primary")),
+
                             html.Li(html.A("CLF's WBLCA Benchmark Study v2", 
                                         href="https://carbonleadershipforum.org/clf-wblca-v2/", 
                                         target="_blank", 
