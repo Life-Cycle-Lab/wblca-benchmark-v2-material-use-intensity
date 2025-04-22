@@ -157,7 +157,7 @@ Special thanks to:
 This project is licensed under the **Creative Commons Attribution 4.0 International (CC BY 4.0)** License.  
 You are free to **share** and **adapt** the material for any purpose, even commercially, **with attribution**.
 
-📄 Read the full license text in the [LICENSE](LICENSE) file or at [creativecommons.org/licenses/by/4.0](https://creativecommons.org/licenses/by/4.0/).. See the [LICENSE](LICENSE) file for details.
+📄 Read the full license text in the [LICENSE](LICENSE) file or at [creativecommons.org/licenses/by/4.0](https://creativecommons.org/licenses/by/4.0/). See the [LICENSE](LICENSE) file for details.
 
 ---
 
@@ -248,8 +248,8 @@ Life Cycle Lab, University of Washington
 | Material Level | life_cycle_stage | Life Cycle Stage | Life cycle stage(s) of the material | NA (string) |
 | Material Level | inv_mass | Inventory Mass (kg) | Total mass of the corresponding material and life cycle stage | kg |
 | Material Level | gwp | Global Warming Potential (kgCO₂e) | Total global warming potential of the corresponding material and life cycle stage | kgCO₂e |
-| Material Level | MUI (kg/m²) | MUI (kg/m²) | Material use intensity (MUI) of the individual material calculated from material’s mass normalized by constructed floor area. | kgCO₂e/m² |
-| Material Level | ECI (kgCO₂e/m²) | ECI (kgCO₂e/m²) | Embodied carbon intensity (ECI) of the individual material calculated from material’s embodied carbon normalized by constructed floor area. | kg/m² |
+| Material Level | MUI (kg/m²) | MUI (kg/m²) | Material use intensity (MUI) of the individual material calculated from material’s mass normalized by constructed floor area. | kg/m² |
+| Material Level | ECI (kgCO₂e/m²) | ECI (kgCO₂e/m²) | Embodied carbon intensity (ECI) of the individual material calculated from material’s embodied carbon normalized by constructed floor area. | kgCO₂e/m² |
 
 ---
 
