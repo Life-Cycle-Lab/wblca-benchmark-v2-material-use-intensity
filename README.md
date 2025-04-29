@@ -4,9 +4,8 @@ A codebase and analyzed dataset of material use and embodied carbon intensity fo
 🧾 **Note:** All analysis code is written in [Jupyter Notebooks](https://jupyter.org/), which are included in the main directory.
 
 [![Article Preprint](https://img.shields.io/badge/Article%20Preprint-Read-green)](https://www.researchsquare.com/article/rs-6315460/v1)
-[![Dashboard](https://img.shields.io/badge/Dashboard-Explore-blue)](https://wblca-benchmark-v2-mui-eci.lifecyclelab.org/)
-[![GitHub Repo](https://img.shields.io/badge/Code%20and%20Data-GitHub-lightgrey)](https://github.com/Life-Cycle-Lab/wblca-benchmark-v2-material-use-embodied-carbon-intensity)
 
+[![Dashboard](https://img.shields.io/badge/Dashboard-Explore-blue)](https://wblca-benchmark-v2-mui-eci.lifecyclelab.org/)
 
 ## ✍️ Citation
 
