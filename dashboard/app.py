@@ -210,8 +210,8 @@ def render_tab_content(tab, stored_selections, stored_graph):
                                         target="_blank", 
                                         className="text-primary")),
 
-                            html.Li(html.A("Benke et al. A Harmonized Dataset of High-resolution Whole Building Life Cycle Assessment Results in North America. (Preprint)", 
-                                        href="https://www.researchsquare.com/article/rs-6108016/v1", 
+                            html.Li(html.A("Benke et al. A Harmonized Dataset of High-Resolution Embodied Life Cycle Assessment Results for Buildings in North America", 
+                                        href="https://www.nature.com/articles/s41597-025-05216-0", 
                                         target="_blank", 
                                         className="text-primary")),
 
